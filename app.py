@@ -1,9 +1,24 @@
 import os
 from flask import Flask, render_template
+from flask_talisman import Talisman
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 app = Flask(__name__)
 
-# Configuración con descripciones técnicas detalladas y rústicas
+# --- BLOQUE DE SEGURIDAD (EL BÚNKER) ---
+# 1. Talisman: Fuerza HTTPS (candadito) y evita ataques de clics/marcos
+Talisman(app, content_security_policy=None, force_https=False)
+
+# 2. Limiter: Evita que alguien sature la web con mil clics por segundo
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["200 per day", "50 per hour"],
+    storage_uri="memory://"
+)
+
+# --- TU CONFIGURACIÓN ACTUAL ---
 CONFIG = {
     'empresa': "MARCELO CAMARGO",
     'whatsapp': "59896424201", 
@@ -66,6 +81,7 @@ CONFIG = {
     ]
 }
 
+# --- TUS RUTAS ---
 @app.route('/')
 def trabajos():
     return render_template('index.html', info=CONFIG, pagina='trabajos')
@@ -78,6 +94,8 @@ def presentacion():
             todas_fotos.append(f['src'])
     return render_template('index.html', info=CONFIG, pagina='presentacion', fotos_cascada=todas_fotos)
 
+# --- INICIO DEL SERVIDOR ---
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port, debug=True)
+    # debug=False para producción en internet
+    app.run(host='0.0.0.0', port=port, debug=False)
