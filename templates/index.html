@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ info.empresa }} | {{ info.tagline }}</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <style>
+        :root { --naranja: #ff9f1c; --fondo: #060606; --borde: rgba(255,255,255,0.08); --texto: #f0f0f0; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Outfit', sans-serif; scroll-behavior: smooth; }
+        body { background: var(--fondo); color: var(--texto); overflow-x: hidden; }
+        
+        #page-loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--fondo); z-index: 5000; transition: opacity 0.8s ease; pointer-events: none; }
+
+        /* NAVEGACIÓN */
+        nav { position: fixed; top: 0; width: 100%; padding: 25px 8%; display: flex; flex-direction: column; align-items: center; z-index: 1000; background: rgba(6,6,6,0.85); backdrop-filter: blur(20px); border-bottom: 1px solid var(--borde); }
+        .logo { font-weight: 900; letter-spacing: 6px; color: var(--naranja); font-size: 1.1rem; margin-bottom: 15px; text-transform: uppercase; text-decoration: none; }
+        .nav-tabs { display: flex; gap: 40px; }
+        .nav-link { text-decoration: none; color: #777; font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; transition: 0.4s; position: relative; padding: 10px 5px; }
+        .nav-link::after { content: ''; position: absolute; bottom: 0; left: 50%; width: 0; height: 2px; background: var(--naranja); transition: 0.4s; transform: translateX(-50%); }
+        .nav-link:hover::after, .nav-link.active::after { width: 100%; }
+        .nav-link:hover, .nav-link.active { color: #fff; }
+
+        /* BOTONES */
+        .btn-primary { padding: 22px 55px; background: var(--naranja); color: #000; text-decoration: none; font-weight: 900; border-radius: 18px; display: inline-block; text-transform: uppercase; border: none; cursor: pointer; position: relative; top: 0; box-shadow: 0 8px 0px #b36b00; transition: 0.2s; }
+        .btn-primary:hover { top: -2px; box-shadow: 0 10px 0px #b36b00, 0 20px 40px rgba(255, 159, 28, 0.4); }
+
+        /* HERO */
+        .hero { height: 100vh; display: flex; align-items: center; justify-content: center; text-align: center; background: linear-gradient(rgba(0,0,0,0.85), rgba(6,6,6,1)), url('/static/parrilla_obra.jpeg.jpeg'); background-size: cover; background-position: center; }
+        .hero-content h1 { font-size: clamp(2.5rem, 6vw, 4.5rem); font-weight: 900; text-transform: uppercase; line-height: 1.1; margin-bottom: 50px; }
+        .highlight { color: var(--naranja); }
+
+        /* PORTFOLIO */
+        #proyectos { padding: 140px 12%; }
+        .obra-card { display: grid; grid-template-columns: 1.2fr 1.6fr; gap: 80px; margin-bottom: 200px; align-items: center; }
+        .obra-info h2 { font-size: 4rem; font-weight: 900; margin-bottom: 35px; }
+        .desc-container { min-height: 250px; }
+        .desc-container h4 { color: var(--naranja); margin-bottom: 15px; text-transform: uppercase; letter-spacing: 3px; }
+        .desc-container p { font-size: 1.1rem; color: #999; line-height: 1.8; max-width: 500px; }
+        .thumb-nav { display: flex; gap: 15px; margin-top: 45px; flex-wrap: wrap; }
+        .thumb { width: 110px; height: 110px; cursor: pointer; opacity: 0.35; background-size: cover; border-radius: 24px; border: 3px solid transparent; transition: 0.3s; }
+        .thumb:hover, .thumb.active { opacity: 1; border-color: var(--naranja); }
+        .img-main { width: 100%; height: 75vh; background-size: cover; background-position: center; border-radius: 24px; cursor: zoom-in; transition: 0.5s; border: 1px solid var(--borde); }
+
+        /* PILARES TÉCNICOS */
+        .tecnica-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px; padding: 100px 12%; background: #0a0a0a; border-top: 1px solid var(--borde); }
+        .tecnica-card { padding: 60px; background: rgba(255,255,255,0.02); border-radius: 24px; transition: 0.5s; border: 1px solid var(--borde); text-align: center; }
+        .tecnica-card:hover { background: rgba(255, 159, 28, 0.05); border-color: var(--naranja); transform: translateY(-10px); }
+        .tecnica-card i { font-size: 3.5rem; color: var(--naranja); margin-bottom: 30px; display: block; }
+        .tecnica-card h3 { font-size: 1.8rem; margin-bottom: 20px; text-transform: uppercase; font-weight: 900; }
+        .tecnica-card p { color: #888; line-height: 1.8; font-size: 1.1rem; }
+
+        /* CASCADA SOBRE MÍ (CON RESALTADO) */
+        .gallery-wall { position: fixed; top: 0; width: 15vw; height: 100vh; overflow: hidden; z-index: 1; }
+        .wall-left { left: 2%; } .wall-right { right: 2%; }
+        .gallery-wall:hover .marquee { animation-play-state: paused; }
+        .marquee { display: flex; flex-direction: column; gap: 20px; animation-duration: 35s; animation-timing-function: linear; animation-iteration-count: infinite; }
+        .wall-left .marquee { animation-name: scroll-up; } .wall-right .marquee { animation-name: scroll-down; }
+        
+        .marquee img { width: 100%; aspect-ratio: 1/1; object-fit: cover; border-radius: 24px; opacity: 0.85; transition: 0.5s ease; border: 1px solid var(--borde); filter: grayscale(10%) brightness(0.9); }
+        .gallery-wall:hover .marquee img { opacity: 0.5; filter: grayscale(50%) brightness(0.7); }
+        .marquee img:hover { opacity: 1 !important; transform: scale(1.05); filter: grayscale(0%) brightness(1.2) !important; box-shadow: 0 0 30px rgba(255, 159, 28, 0.3); z-index: 2; position: relative; }
+
+        @keyframes scroll-up { 0% { transform: translateY(0); } 100% { transform: translateY(-50%); } }
+        @keyframes scroll-down { 0% { transform: translateY(-50%); } 100% { transform: translateY(0); } }
+
+        /* PERFIL Y FORMULARIO */
+        .perfil-card { max-width: 600px; margin: 180px auto; text-align: center; position: relative; z-index: 10; padding: 0 20px; }
+        .foto-container { width: 220px; height: 220px; margin: 0 auto 40px; border: 4px solid var(--naranja); border-radius: 24px; overflow: hidden; }
+        .foto-perfil { width: 100%; height: 100%; object-fit: cover; }
+        .contacto-narrow { margin-top: 60px; text-align: left; background: rgba(15,15,15,0.7); backdrop-filter: blur(20px); border: 1px solid var(--borde); border-radius: 24px; padding: 40px; }
+        .contacto-narrow input, .contacto-narrow textarea, .contacto-narrow select { width: 100%; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.05); padding: 18px; color: #fff; margin-bottom: 15px; border-radius: 12px; font-size: 16px; }
+        .whatsapp-btn { width: 100%; margin-top: 15px; display: flex; align-items: center; justify-content: center; gap: 12px; }
+
+        /* FOOTER */
+        footer { padding: 100px 12%; background: #000; border-top: 1px solid var(--borde); margin-top: 100px; position: relative; z-index: 10; }
+        .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 100px; text-align: left; }
+        .footer-logo { font-size: 1.5rem; font-weight: 900; color: var(--naranja); margin-bottom: 30px; display: block; text-decoration: none; }
+        .footer-title { margin-bottom: 25px; text-transform: uppercase; letter-spacing: 2px; font-size: 0.9rem; font-weight: 800; color: #fff; }
+        .footer-links { list-style: none; }
+        .footer-links li { margin-bottom: 15px; }
+        .footer-links a { color: #666; text-decoration: none; transition: 0.3s; font-size: 14px; }
+        .footer-links a:hover { color: var(--naranja); }
+
+        .whatsapp-float { position: fixed; bottom: 35px; right: 35px; background: #25d366; color: #fff; width: 70px; height: 70px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 35px; z-index: 2000; text-decoration: none; transition: 0.3s; }
+        .whatsapp-float:hover { transform: scale(1.1); }
+
+        @media (max-width: 1100px) { .obra-card, .footer-grid { grid-template-columns: 1fr; gap: 50px; } .gallery-wall { display: none; } .obra-info h2 { font-size: 2.5rem; } }
+    </style>
+</head>
+<body>
+    <div id="page-loader" style="opacity: 1;"></div>
+    
+    <div id="lightbox" onclick="this.style.display='none'" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 3000; display: none; align-items: center; justify-content: center; cursor: zoom-out;">
+        <img src="" id="lg-img" style="max-width: 90%; max-height: 80%; border-radius: 24px;">
+    </div>
+
+    <nav>
+        <a href="/" class="logo">{{ info.empresa }}</a>
+        <div class="nav-tabs">
+            <a href="/" class="nav-link {% if pagina == 'trabajos' %}active{% endif %}">Portfolio</a>
+            <a href="/presentacion" class="nav-link {% if pagina == 'presentacion' %}active{% endif %}">Sobre Mí</a>
+        </div>
+    </nav>
+
+    {% if pagina == 'trabajos' %}
+    <header class="hero">
+        <div class="hero-content" data-aos="fade-up">
+            <span style="color: var(--naranja); letter-spacing: 8px; font-weight: 800; text-transform: uppercase; font-size: 12px; display: block; margin-bottom: 30px;">Montevideo • Uruguay</span>
+            <h1>CALIDAD QUE SE<br><span class="highlight">CONSTRUYE CON TÉCNICA</span></h1>
+            <a href="#proyectos" class="btn-primary">Explorar Proyectos</a>
+        </div>
+    </header>
+
+    <section id="proyectos">
+        {% for s in info.servicios %}
+        <div class="obra-card" data-aos="fade-up">
+            <div class="obra-info">
+                <h2 style="text-transform: uppercase;">{{ s.titulo }}</h2>
+                <div class="desc-container">
+                    <h4 id="t-{{ s.id }}">{{ s.fotos[0].t }}</h4>
+                    <p id="d-{{ s.id }}">{{ s.fotos[0].d }}</p>
+                </div>
+                <div class="thumb-nav">
+                    {% for f in s.fotos %}
+                    <div class="thumb {% if loop.first %}active{% endif %}" style="background-image: url('{{ f.src }}')" onclick="changePhoto('{{ f.src }}', '{{ f.t }}', '{{ f.d }}', '{{ s.id }}', this)"></div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="img-main" id="view-{{ s.id }}" style="background-image: url('{{ s.img_principal }}');" onclick="openLG('{{ s.img_principal }}')"></div>
+        </div>
+        {% endfor %}
+    </section>
+
+    <section class="tecnica-grid">
+        <div class="tecnica-card" data-aos="fade-up">
+            <i class="fas fa-hammer"></i>
+            <h3>Oficio a Conciencia</h3>
+            <p>Cada pieza se presenta y se mide con rigor. El secreto está en el tiempo que dedicamos a que cada junta quede prolija y nivelada.</p>
+        </div>
+        <div class="tecnica-card" data-aos="fade-up" data-aos-delay="200">
+            <i class="fas fa-layer-group"></i>
+            <h3>Materiales Técnicos</h3>
+            <p>Usamos pegamentos de alto rendimiento e impermeabilizantes cementicios. Calidad para que la obra dure toda la vida.</p>
+        </div>
+        <div class="tecnica-card" data-aos="fade-up" data-aos-delay="400">
+            <i class="fas fa-ruler-combined"></i>
+            <h3>Remates de Alta Gama</h3>
+            <p>Especialistas en cortes a 45° y terminaciones manuales. Evitamos perfiles plásticos buscando la estética pura del material.</p>
+        </div>
+    </section>
+
+    {% else %}
+    <div class="gallery-wall wall-left"><div class="marquee">{% for img in fotos_cascada %}<img src="{{ img }}">{% endfor %}{% for img in fotos_cascada %}<img src="{{ img }}">{% endfor %}</div></div>
+    <div class="gallery-wall wall-right"><div class="marquee">{% for img in fotos_cascada %}<img src="{{ img }}">{% endfor %}{% for img in fotos_cascada %}<img src="{{ img }}">{% endfor %}</div></div>
+    
+    <section>
+        <div class="perfil-card" data-aos="fade-up">
+            <div class="foto-container"><img src="/static/perfil.jpeg.jpeg" class="foto-perfil"></div>
+            <h2 style="font-size: 2.8rem; font-weight: 900; margin-bottom: 20px;">MARCELO CAMARGO</h2>
+            <p style="color: #bbb; line-height: 2; font-size: 1.1rem;">Oficio y compromiso en cada proyecto. Especialista en remodelaciones técnicas con más de una década de experiencia en Uruguay.</p>
+            
+            <div class="contacto-narrow">
+                <h3>Presupuesta tu proyecto</h3>
+                <input type="text" id="n" placeholder="Tu Nombre Completo">
+                <select id="t">
+                    <option value="" disabled selected>Tipo de Proyecto</option>
+                    <option value="Lavamanos">Lavamanos / Grifería</option>
+                    <option value="Ducheros">Ducheros / Hidráulica</option>
+                    <option value="Piscinas">Piscinas de Hormigón</option>
+                    <option value="Baño">Baño Integral</option>
+                    <option value="Parrilla">Parrilla / Quincho</option>
+                </select>
+                <textarea id="m" rows="4" placeholder="¿Qué reforma tenés en mente?"></textarea>
+                <button class="btn-primary whatsapp-btn" onclick="goWA()">
+                    Solicitar Presupuesto <i class="fab fa-whatsapp"></i>
+                </button>
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    <footer>
+        <div class="footer-grid">
+            <div>
+                <a href="/" class="footer-logo">MARCELO CAMARGO</a>
+                <p style="color: #666; line-height: 1.8;">Transformando espacios con rigor técnico y oficio artesanal en cada detalle.</p>
+            </div>
+            <div>
+                <h4 class="footer-title">Navegación</h4>
+                <ul class="footer-links">
+                    <li><a href="/">Portfolio de Obras</a></li>
+                    <li><a href="/presentacion">Sobre Mí</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="footer-title">Ubicación</h4>
+                <p style="color: #888; font-size: 14px; margin-bottom: 10px;">Montevideo, Uruguay</p>
+                <p style="color: #555; font-size: 13px;">Servicios en Montevideo y alrededores.</p>
+            </div>
+        </div>
+        <div style="margin-top: 80px; padding-top: 40px; border-top: 1px solid #111; text-align: center; color: #333; font-size: 11px; letter-spacing: 2px;">
+            © 2026 MARCELO CAMARGO • CONSTRUCCIÓN TÉCNICA
+        </div>
+    </footer>
+
+    <a href="https://wa.me/{{ info.whatsapp }}" class="whatsapp-float" target="_blank"><i class="fab fa-whatsapp"></i></a>
+
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init({ duration: 1000, once: true });
+        window.onload = () => { document.getElementById('page-loader').style.opacity = '0'; };
+
+        function changePhoto(url, t, d, id, el) {
+            const v = document.getElementById('view-' + id);
+            v.style.backgroundImage = "url('" + url + "')";
+            document.getElementById('t-' + id).innerText = t;
+            document.getElementById('d-' + id).innerText = d;
+            v.setAttribute('onclick', `openLG('${url}')`);
+            el.parentElement.querySelectorAll('.thumb').forEach(x => x.classList.remove('active'));
+            el.classList.add('active');
+        }
+
+        function openLG(url) {
+            document.getElementById('lg-img').src = url;
+            document.getElementById('lightbox').style.display = 'flex';
+        }
+
+        function goWA() {
+            const n = document.getElementById('n').value;
+            const t = document.getElementById('t').value;
+            const m = document.getElementById('m').value;
+
+            if(!n || !t || !m) {
+                Swal.fire({
+                    title: '¡Atención!',
+                    text: 'Por favor, completá todos los datos para enviar la consulta.',
+                    icon: 'warning',
+                    iconColor: '#ff9f1c',
+                    background: '#1a1a1a',
+                    color: '#ffffff',
+                    confirmButtonColor: '#ff9f1c',
+                    confirmButtonText: 'Entendido'
+                });
+                return; 
+            }
+
+            const textoWA = `Hola Marcelo, soy ${n}. Me contacto por la web por un proyecto de ${t}. Detalles: ${m}`;
+            window.open(`https://wa.me/{{ info.whatsapp }}?text=${encodeURIComponent(textoWA)}`, '_blank');
+        }
+    </script>
+</body>
+</html>
